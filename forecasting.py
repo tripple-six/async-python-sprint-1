@@ -16,8 +16,8 @@ def forecast_weather() -> None:
     Analysis of weather conditions by city
     """
 
-    ywAPI = YandexWeatherAPI()
-    data_fetching_task = DataFetchingTask(ywAPI)
+    yw_api = YandexWeatherAPI()
+    data_fetching_task = DataFetchingTask(yw_api)
     ctx = mp.get_context("spawn")
     q = Queue(ctx=ctx)
     pipe_calc_agg_receiver, pipe_calc_agg_sender = mp.Pipe(duplex=False)

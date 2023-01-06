@@ -16,28 +16,31 @@ class DayForecast(BaseModel):
     avg_temp: Optional[int]
     count_hour_clear: Optional[float]
 
+    CLEAR_CONDITIONS: set[str] = {"clear", "partly-cloudy", "cloudy", "overcast"}
+    WORK_HOURS_RANGE: range = range(9, 20)
+
     @validator("date", pre=True)
     def day_str_to_date(cls, v) -> datetime:
         return datetime.datetime.strptime(v, "%Y-%m-%d")
 
     def calculate_avg_temp(self) -> None:
-        result = [x.temp for x in self.hours if 9 <= x.hour <= 19]
-        if result:
-            self.avg_temp = sum(result) // len(result)
-        else:
-            self.avg_temp = 0
+        work_hours: list[HourForecast] = [
+            x for x in self.hours if x.hour in self.WORK_HOURS_RANGE
+        ]
+        self.avg_temp = (
+            sum(x.temp for x in work_hours) // len(work_hours) if work_hours else 0
+        )
 
     def calculate_avg_hour_clear_days(self) -> None:
-        clear_cond = {"clear", "partly-cloudy", "cloudy", "overcast"}
-        result = [
+        result: list[str] = [
             x.condition
             for x in self.hours
-            if 9 <= x.hour <= 19 and x.condition in clear_cond
+            if x.hour in self.WORK_HOURS_RANGE and x.condition in self.CLEAR_CONDITIONS
         ]
-        if result:
-            self.count_hour_clear = len(result)
-        else:
-            self.count_hour_clear = 0
+        self.count_hour_clear = len(result) if result else 0
+
+    class Config:
+        arbitrary_types_allowed: bool = True
 
 
 class CityForecast(BaseModel):
